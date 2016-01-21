@@ -35,7 +35,7 @@ import sys
 import struct
 import os.path
 
-USE_FACES = True  # set to False for OpenSCAD version < 2014.03
+BACK_COMPAT = False  # set to True for OpenSCAD version < 2014.03
 
 
 def parseAscii(inputFile):
@@ -115,16 +115,18 @@ def parseBinary(inputFile, solidName="stl2scad"):
     return modules
 
 
-def convert(outputFile, modules):
+def convert(outputFile, modules, backCompat):
     """
     """
     for solidName, vertices, faces in modules:
         points_ = ",\n\t\t\t".join(vertices)
         faces_ = ",\n\t\t\t".join(faces)
-        if USE_FACES:
-            module = "module %s() {\n\tpolyhedron(\n\t\tpoints=[\n\t\t\t%s\n\t\t],\n\t\tfaces=[\n\t\t\t%s\n\t\t]\n\t);\n}\n\n\n%s();\n" % (solidName, points_, faces_, solidName)
+        if backCompat:
+            facesArg = "triangles"
         else:
-            module = "module %s() {\n\tpolyhedron(\n\t\tpoints=[\n\t\t\t%s\n\t\t],\n\t\ttriangles=[\n\t\t\t%s\n\t\t]\n\t);\n}\n\n\n%s();\n" % (solidName, points_, faces_, solidName)
+            facesArg = "faces"
+        module = ("module %s() {\n\tpolyhedron(\n\t\tpoints=[\n\t\t\t%s\n\t\t],\n\t\t%s=[\n\t\t\t%s\n\t\t]\n\t);\n}\n\n\n%s();\n" %
+                 (solidName, points_, facesArg, faces_, solidName))
         outputFile.write(module)
 
     outputFile.close()
@@ -145,7 +147,7 @@ def main():
     outputFileName = "%s%s%s" % (os.path.splitext(inputFileName)[0], os.path.extsep, "scad")
 
     outputFile = open(outputFileName, "w")
-    convert(outputFile, modules)
+    convert(outputFile, modules, BACK_COMPAT)
 
     print ("%s saved" % outputFileName)
 
