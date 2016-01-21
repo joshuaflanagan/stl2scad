@@ -34,6 +34,7 @@ import re
 import sys
 import struct
 import os.path
+import argparse
 
 BACK_COMPAT = False  # set to True for OpenSCAD version < 2014.03
 
@@ -133,7 +134,10 @@ def convert(outputFile, modules, backCompat):
 
 
 def main():
-    inputFileName = sys.argv[1]
+    parser = argparse.ArgumentParser(description='Convert an .stl file to an OpenSCAD .scad file')
+    parser.add_argument("input_file")
+    args = parser.parse_args()
+    inputFileName = args.input_file
     with open(inputFileName, 'rb') as testFile:
         isACII = (testFile.read(5) == b'solid')
 
