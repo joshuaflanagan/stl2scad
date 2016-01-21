@@ -132,24 +132,18 @@ def convert(outputFile, modules):
 
 def main():
     inputFileName = sys.argv[1]
-    # For Python2
-    #inputFile = file(inputFileName)
-    # For Python3
-    inputFile = open(inputFileName)
+    with open(inputFileName, 'rb') as testFile:
+        isACII = (testFile.read(5) == b'solid')
 
-    # Check if ascii or binary
-    if inputFile.read(5) == "solid":
-        print ("ascii file")
+    if isACII:
+        inputFile = open(inputFileName)
         modules = parseAscii(inputFile)
     else:
-        print ("binary file")
+        inputFile = open(inputFileName, 'rb')
         modules = parseBinary(inputFile)
 
     outputFileName = "%s%s%s" % (os.path.splitext(inputFileName)[0], os.path.extsep, "scad")
 
-    # For Python2
-    #outputFile = file(outputFileName, "w")
-    # For Python3
     outputFile = open(outputFileName, "w")
     convert(outputFile, modules)
 
