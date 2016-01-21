@@ -53,7 +53,7 @@ def parseAscii(inputFile):
 
     for solidStr in re.findall(r"solid\s(.*?)endsolid", inputStr, re.S):
         solidName = re.match(r"^(.*)$", solidStr, re.M).group(0)
-        print "Processing object %s..." % solidName
+        print ("Processing object %s..." % solidName)
         vertices = []
         faces = []
         for facetStr in re.findall(r"facet\s(.*?)endfacet", solidStr, re.S):
@@ -80,7 +80,7 @@ def parseBinary(inputFile, solidName="stl2scad"):
     inputFile.seek(80)
 
     nbTriangles = struct.unpack("<I", inputFile.read(4))[0]
-    print "found %d faces" % nbTriangles
+    print ("found %d faces" % nbTriangles)
 
     modules = []
     vertices = []
@@ -132,21 +132,28 @@ def convert(outputFile, modules):
 
 def main():
     inputFileName = sys.argv[1]
-    inputFile = file(inputFileName)
+    # For Python2
+    #inputFile = file(inputFileName)
+    # For Python3
+    inputFile = open(inputFileName)
 
     # Check if ascii or binary
     if inputFile.read(5) == "solid":
-        print "ascii file"
+        print ("ascii file")
         modules = parseAscii(inputFile)
     else:
-        print "binary file"
+        print ("binary file")
         modules = parseBinary(inputFile)
 
     outputFileName = "%s%s%s" % (os.path.splitext(inputFileName)[0], os.path.extsep, "scad")
-    outputFile = file(outputFileName, "w")
+
+    # For Python2
+    #outputFile = file(outputFileName, "w")
+    # For Python3
+    outputFile = open(outputFileName, "w")
     convert(outputFile, modules)
 
-    print "%s saved" % outputFileName
+    print ("%s saved" % outputFileName)
 
 
 if __name__ == "__main__":
