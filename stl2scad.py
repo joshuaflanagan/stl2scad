@@ -35,6 +35,7 @@ import sys
 import struct
 import os.path
 import argparse
+import numpy
 
 def parseAscii(inputFile):
     """
@@ -62,7 +63,7 @@ def parseAscii(inputFile):
                     try:
                         face.append(vertices.index(vertex))
                     except ValueError:
-                        vertices.append(str(vertex))
+                        vertices.append(vertex)
                         face.append(len(vertices) - 1)
             faces.append(str(face))
         modules.append((solidName, vertices, faces))
@@ -100,7 +101,7 @@ def parseBinary(inputFile, solidName="stl2scad"):
             try:
                 face.append(vertices.index(vertex))
             except ValueError:
-                vertices.append(str(list(vertex)))
+                vertices.append(list(vertex))
                 face.append(len(vertices) - 1)
 
         faces.append(str(face))
@@ -113,18 +114,33 @@ def parseBinary(inputFile, solidName="stl2scad"):
     return modules
 
 
-def convert(outputFile, modules, backCompat):
+def convert(outputFile, modules, backCompat, boundingBox):
     """
     """
     for solidName, vertices, faces in modules:
-        points_ = ",\n\t\t\t".join(vertices)
+        points_ = ",\n\t\t\t".join(map(str,vertices))
         faces_ = ",\n\t\t\t".join(faces)
         if backCompat:
             facesArg = "triangles"
         else:
             facesArg = "faces"
-        module = ("module %s() {\n\tpolyhedron(\n\t\tpoints=[\n\t\t\t%s\n\t\t],\n\t\t%s=[\n\t\t\t%s\n\t\t]\n\t);\n}\n\n\n%s();\n" %
-                 (solidName, points_, facesArg, faces_, solidName))
+        npAry = numpy.array(vertices)
+        mins = npAry.min(0)
+        maxs = npAry.max(0)
+        diffs = maxs - mins
+
+        if boundingBox:
+            boundingBox = ("\n\ttranslate([%s])\n\t\t%%cube([%s]);\n" %
+                    (
+                        ", ".join(map(str, mins)),
+                        ", ".join(map(str, diffs))
+                        )
+                    )
+        else:
+            boundingBox = ""
+
+        module = ("module %s() {%s\n\tpolyhedron(\n\t\tpoints=[\n\t\t\t%s\n\t\t],\n\t\t%s=[\n\t\t\t%s\n\t\t]\n\t);\n}\n\n\n%s();\n" %
+                 (solidName, boundingBox, points_, facesArg, faces_, solidName))
         outputFile.write(module)
 
     outputFile.close()
@@ -132,12 +148,13 @@ def convert(outputFile, modules, backCompat):
 
 def main():
     parser = argparse.ArgumentParser(description='Convert an .stl file to an OpenSCAD .scad file')
-    parser.add_argument("input_file")
+    parser.add_argument("stl_file", help="The .stl file to convert")
+    parser.add_argument("-B", "--bounding-box", action='store_true', help="include a non-rendered bounding-box around the model")
     parser.add_argument("-C", "--scad-version", choices=['2014.03', 'current'],
-            default='current', metavar="scad_version")
+            default='current', help="specify an older version of OpenSCAD, for backward compatibility")
     args = parser.parse_args()
     print (args.scad_version)
-    inputFileName = args.input_file
+    inputFileName = args.stl_file
     with open(inputFileName, 'rb') as testFile:
         isACII = (testFile.read(5) == b'solid')
 
@@ -151,7 +168,7 @@ def main():
     outputFileName = "%s%s%s" % (os.path.splitext(inputFileName)[0], os.path.extsep, "scad")
 
     outputFile = open(outputFileName, "w")
-    convert(outputFile, modules, args.scad_version == '2014.03')
+    convert(outputFile, modules, args.scad_version == '2014.03', args.bounding_box)
 
     print ("%s saved" % outputFileName)
 
