@@ -65,6 +65,7 @@ def parseAscii(inputFile):
                     except ValueError:
                         vertices.append(vertex)
                         face.append(len(vertices) - 1)
+            face[1], face[2] = face[2], face[1]
             faces.append(str(face))
         modules.append((solidName, vertices, faces))
 
@@ -104,6 +105,7 @@ def parseBinary(inputFile, solidName="stl2scad"):
                 vertices.append(list(vertex))
                 face.append(len(vertices) - 1)
 
+        face[1], face[2] = face[2], face[1]
         faces.append(str(face))
 
         # Skip byte count
