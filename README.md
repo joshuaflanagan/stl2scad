@@ -11,6 +11,8 @@ python stl2scad.py my_3d_model.stl
 
 to generate `my_3d_model.scad` in the same directory.
 
+> Note: This script is written and tested to work with Python 3. Python 2 is not supported, though it could probably be made to work with some minor modifications.
+
 ## Attribution
 
 This script originally came from [thingiverse:64709](http://www.thingiverse.com/thing:64709)
